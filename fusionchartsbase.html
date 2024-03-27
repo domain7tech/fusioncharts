@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>District Failing Grades Report,<br>Grades 6-12</title>
+    <!--Types of charts, https://www.fusioncharts.com/dev/chart-guide/list-of-charts  -->
+    <!--Javascript Example-->
+    <!--https://www.fusioncharts.com/dev/api/fusioncharts -->
+    
+		
+		              <!-- FusionCharts Scripts Paste at the Top of the Page You Want to Chart-->
+              <script src="/scripts/fusioncharts/fusioncharts.js" type="text/javascript"></script>
+              <script src="/scripts/fusioncharts/fusioncharts.charts.js" type="text/javascript"></script>
+              <script src="/scripts/fusioncharts/fusioncharts.licensekey.js" type="text/javascript"></script>
+              <script type="text/javascript" src="/scripts/fusioncharts/psFusionChartsCustom.js"></script>
+		
+		
+		~[wc:commonscripts]
+		<link href="/images/css/screen.css" rel="stylesheet" media="screen">
+		<link href="/images/css/print.css" rel="stylesheet" media="print">
+            <style>
+        
+                    .divScroll {
+                    overflow:scroll;
+                    height:1200px;
+                    width:1600px;
+        
+                    }
+            </style>
+
+
+
+
+		~[wc:pscb_init]
+		
+
+        <script>
+          
+            function renderChart() {
+                var dynamicChartData = extractTableData(); // Get dynamic data from table
+
+                var chartConfig = {
+                    type: 'column2d',
+                    renderAt: 'chart-container',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "caption": "Average of Low Grades Below D+",
+                            "subCaption": "",
+                            "xAxisName": "Student",
+                            "yAxisName": "Percentage",
+                            "numberSuffix": "",
+                        },
+                        "data": dynamicChartData // Use the dynamic data here
+                    }
+                };
+
+                var fusioncharts = new FusionCharts(chartConfig);
+                fusioncharts.render();
+            }
+
+
+          //The table ID with the scores is called, "results"
+          //What ever table you want to reference, you need to list with var table
+            function extractTableData() {
+                var table = document.getElementById("results");
+                if (!table) {
+                    console.error("Table with ID 'results' not found.");
+                    return [];
+                }
+
+                var rows = table.getElementsByTagName("tr");
+                var jsonArray = [];
+
+                for (var i = 1; i < rows.length; i++) {
+                    var cells = rows[i].getElementsByTagName("td");
+                    if (cells.length > 6) { // Ensure there are enough columns
+                        var label = cells[1].innerText; // Assuming "LastFirst" is in the second column
+                        var value = cells[16].innerText;
+
+                        // Check if the value is a valid number
+                        if (isNaN(parseFloat(value))) {
+                            console.error("Value is not a valid number in row", i);
+                            continue;
+                        }
+
+                        var jsonObj = {
+                            label: label,
+                            value: parseFloat(value) // Use parseFloat to accommodate decimal values
+                        };
+                        jsonArray.push(jsonObj);
+                    } else {
+                        console.error("Insufficient cells in row", i);
+                    }
+                }
+                return jsonArray;
+            }
+                        
+          
+		</script>
+
+        <script>  pscbToolButtons = {"copyData":"Yes", "csvFile":"Yes", "pdfFile":"No", "curSel":"Yes"}; </script>
+	
+    
+    </head>
+
+
+	<body>
+		~[wc:admin_header_frame_css]<!-- breadcrumb start --><a href="/admin/home.html" target="_top">Start Page</a> &gt; <a href="/admin/reports_pscb/pscb_home.html" target="_top">PSCB Custom Reports</a> &gt; <a href="/admin/reports_pscb/pscb_grading.html" target="_top">Grading</a> &gt; District Failing Grades Report<!-- breadcrumb end -->~[wc:admin_navigation_frame_css]
+		
+	
+
+		<div class="box-round">
+			<h2>District Failing Grades Report,<br>Grades 6-12</h2>
+
+
+            <div id="chart-container">FusionCharts XT will load here!</div>
+                <button onclick="renderChart()">Load Chart</button>
+
+			
+            <div class="box-round">
+
+                
+
+
+                <div class="divScroll">
+<!--You will see the table ID name "results" on the line below-->
+                  
+            <table border="0" cellspacing="01" cellpadding="1" class="tablesorter grid" id="results">
+        
+                <thead>
+                    <tr class="headerRow">
+                        <th class="left">Std Number</th>
+                        <th class="left">Student</th>
+                        <th class="left">School</th>
+                        <th class="left">Grade Level</th>
+                        <th class="left">StoreCode</th>
+                        <th class="left">Grade</th>
+                        <th class="left">Percent</th>
+                        <th class="right">GPA Points</th>
+                        <th class="left filter-select">Grade Scale</th>
+                        <th class="right">Pot Crd</th>
+                        <th class="right">Ern Crd</th>
+                        <th class="left filter-select">Course</th>
+                        <th class="left">Course Number</th>
+                        <th class="left">Term ID</th>
+                        <th class="left filter-select">Teacher</th>
+                        <th class="left">RecordCount</th>
+                        <th class="left">AveragePercent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ~[tlist_sql;
+                    SELECT
+                    s.dcid,
+                    s.student_number,
+                    s.LastFirst,
+                    MAX(sg.SchoolName) AS SchoolName,
+                    MAX(sg.grade_level) AS grade_level,
+                    MAX(sg.storecode) AS storecode,
+                    LISTAGG(sg.Grade, ', ') WITHIN GROUP (ORDER BY sg.Grade) AS Grades,
+                    ROUND(AVG(sg.percent), 2) AS AvgPercent,
+                    ROUND(AVG(sg.GPA_Points), 2) AS AvgGPA_Points,
+                    MAX(sg.GradeScale_Name) AS GradeScale_Name,
+                    SUM(sg.PotentialCrHrs) AS TotalPotentialCrHrs,
+                    SUM(sg.EarnedCrHrs) AS TotalEarnedCrHrs,
+                    LISTAGG(sg.Course_Name, ', ') WITHIN GROUP (ORDER BY sg.Course_Name) AS Courses,
+                    MAX(sg.course_number) AS course_number,
+                    MAX(sg.termid) AS termid,
+                    LISTAGG(sg.Teacher_Name, ', ') WITHIN GROUP (ORDER BY sg.Teacher_Name) AS Teachers,
+                    agg.RecordCount,
+                    agg.AveragePercent
+                FROM StoredGrades sg
+                INNER JOIN Students s ON sg.StudentID = s.ID
+                LEFT JOIN Sections sec ON sg.SectionID = sec.ID
+                LEFT JOIN (
+                    SELECT 
+                        StudentID,
+                        COUNT(*) AS RecordCount,
+                        ROUND(AVG(percent), 2) AS AveragePercent
+                    FROM StoredGrades
+                    WHERE schoolid = ~(curschoolid) 
+                        AND grade_level >= 6
+                        AND grade IN ('F','F-')
+                        AND StoreCode IN ('S1','Q3','S2')
+                        AND Termid LIKE '~(curyearid)__'
+                    GROUP BY StudentID
+                ) agg ON s.ID = agg.StudentID
+                WHERE s.enroll_status = 0
+                    AND sg.schoolid = ~(curschoolid)
+                    AND sg.grade_level >= 6
+                    AND sg.grade IN ('F','F-')
+                    AND sg.StoreCode IN ('S1','Q3','S2')    
+                    AND sg.Termid LIKE '~(curyearid)__'
+                GROUP BY s.dcid, s.student_number, s.LastFirst, agg.RecordCount, agg.AveragePercent
+                ORDER BY agg.AveragePercent DESC, agg.RecordCount DESC, UPPER(TRIM(s.lastfirst))    
+                    ;alternatecolor;nonemessage=
+                    <tr nodata><td colspan="100%">No Records Found.</td></tr>]
+                    <tr class="Record" data-StudentID="~(dcid;t)">
+                        <td class="left">~(student_number;t)</td>
+                        <td class="left nowrap"><a target="_blank" href="#?frn=001~dcid)"></a>~(s.LastFirst;t)</td>
+                        <td class="left">~(sg.schoolname;t)</td>
+                        <td class="left">~(sg.grade_level;t)</td>
+                        <td class="left">~(sg.storecode;t)</td>
+                        <td class="left">~(sg.Grade;t)</td>
+                        <td class="left">~(percent;t)</td>
+                        <td class="left">~(sg.GPA_Points;t)</td>
+                        <td class="left">~(sg.GradeScale_Name;t)</td>
+                        <td class="left">~(sg.PotentialCrHrs;t)</td>
+                        <td class="left">~(sg.EarnedCrHrs;t)</td>
+                        <td class="left">~(Course_Name;t)</td>
+                        <td class="left">~(Course_Number;t)</td>
+                        <td class="left">~(sg.TermID;t)</td>
+                        <td class="left">~(sg.Teacher;t)</td>
+                        <td class="left">~(agg.RecordCount;t)</td>
+                        <td class="left">~(agg.AveragePercent;t)</td>
+                        
+                    </tr>
+                    [/tlist_sql]
+                </tbody>
+            </table>
+        
+        </div>
+        
+        </div>
+
+
+
+			<!-- End of results -->
+		<div>
+			<p><center>Report generated at ~[time] on ~[date]</center></p>
+		</div>
+		~[wc:admin_footer_frame_css]
+	</body>
+</html>
