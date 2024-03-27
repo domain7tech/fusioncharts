@@ -34,7 +34,8 @@
 		
 
         <script>
-          
+//This renders the chart and sets the attributes
+		
             function renderChart() {
                 var dynamicChartData = extractTableData(); // Get dynamic data from table
 
@@ -63,6 +64,9 @@
 
           //The table ID with the scores is called, "results"
           //What ever table you want to reference, you need to list with var table
+	//This is a custom script created to extract the data from the table so that you
+		//you do not need to add it to the chart manually
+		//data is returned in a json array
             function extractTableData() {
                 var table = document.getElementById("results");
                 if (!table) {
@@ -128,7 +132,7 @@
 <!--You will see the table ID name "results" on the line below-->
                   
             <table border="0" cellspacing="01" cellpadding="1" class="tablesorter grid" id="results">
-        
+   <!--The code is uing common Grade store codes, if your are different take time to change them now-->     
                 <thead>
                     <tr class="headerRow">
                         <th class="left">Std Number</th>
